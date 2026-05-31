@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Site Pet Demo</title>
+  <style>
+    body {
+      min-height: 300vh;
+      font-family: sans-serif;
+      padding: 40px;
+      background: #f5f5f5;
+      color: #333;
+    }
+    h1 { margin-bottom: 8px; }
+    p  { max-width: 600px; line-height: 1.7; }
+    .controls { margin: 24px 0; display: flex; gap: 12px; flex-wrap: wrap; }
+    button {
+      padding: 8px 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🐾 Site Pet Demo</h1>
+  <p>
+    A pixel-art pet walks along the bottom of the viewport.
+    <strong>Hover near it</strong> to make it follow your cursor.
+    <strong>Click it</strong> for a reaction.
+    Scroll down — it stays fixed to the viewport.
+  </p>
+
+  <div class="controls">
+    <button onclick="switchPet('dino')">Switch to Dino</button>
+    <button onclick="switchPet('cat')">Switch to Cat</button>
+    <button onclick="switchPet('dog')">Switch to Dog</button>
+  </div>
+
+  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Scroll down to see the pet stays fixed...</p>
+  <p style="margin-top: 100vh">Bottom of page reached.</p>
+
+  <script>
+    function switchPet(type) {
+      const el = document.getElementById('site-pet-container');
+      if (el) el.remove();
+      window.SitePetConfig = { pet: type, scale: 2, speed: 3, floor: 0 };
+      const s = document.createElement('script');
+      s.src = '../site-pet.js?t=' + Date.now();
+      document.body.appendChild(s);
+    }
+  </script>
+
+  <script>
+    window.SitePetConfig = {
+      pet: 'dino',
+      scale: 2,
+      speed: 3,
+      floor: 0,
+    };
+  </script>
+  <script src="../site-pet.js"></script>
+</body>
+</html>
