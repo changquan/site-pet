@@ -235,7 +235,7 @@
       }
     }
     function handleClick(e) {
-      if (isNear(getEl(), e.clientX, e.clientY, 50))
+      if (isNear(getEl(), e.clientX, e.clientY, 80))
         onPetClick();
     }
     document.addEventListener("mousemove", handleMove);

@@ -26,7 +26,7 @@ export function setupCursorTracking({ getEl, onNear, onFar, onPetClick }) {
   }
 
   function handleClick(e) {
-    if (isNear(getEl(), e.clientX, e.clientY, 50)) onPetClick();
+    if (isNear(getEl(), e.clientX, e.clientY, 80)) onPetClick();
   }
 
   document.addEventListener('mousemove', handleMove);
