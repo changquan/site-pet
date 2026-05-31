@@ -12,19 +12,20 @@ function init() {
   const renderer = createRenderer(config);
 
   let x = Math.random() * Math.max(0, window.innerWidth - 64);
-  let cursorX = -9999;
+  let running = true;
 
   function applySprite(state) {
     const { url, flip: baseFlip } = getSpriteUrl(config.pet, state, base);
     let flip = baseFlip;
     if (state === STATES.FOLLOW_CURSOR) {
-      flip = cursorDirection(renderer.getElement(), cursorX) === 'left';
+      flip = cursorDirection(renderer.getElement(), cursor.getCursorX()) === 'left';
     }
     renderer.setSprite(url, flip, config.scale);
   }
 
   // Sprite on error: silently remove pet
   renderer.getElement().querySelector('img').addEventListener('error', () => {
+    running = false;
     renderer.remove();
     sm.stop();
   });
@@ -43,12 +44,10 @@ function init() {
     },
   });
 
-  // Keep cursorX updated for follow-cursor direction
-  document.addEventListener('mousemove', (e) => { cursorX = e.clientX; });
-
   let lastTime = null;
   function loop(timestamp) {
-    if (!lastTime) lastTime = timestamp;
+    if (!running) return;
+    if (lastTime === null) lastTime = timestamp;
     const dt = Math.min(timestamp - lastTime, 50); // cap at 50ms to avoid jumps
     lastTime = timestamp;
 
@@ -64,7 +63,7 @@ function init() {
       x = Math.max(x - pxPerFrame, 0);
       if (x <= 0) sm.onEdge('left');
     } else if (state === STATES.FOLLOW_CURSOR) {
-      const target = cursorX - pw / 2;
+      const target = cursor.getCursorX() - pw / 2;
       const diff = target - x;
       x += Math.sign(diff) * Math.min(Math.abs(diff), config.speed * 2 * dt / 16);
       x = Math.max(0, Math.min(x, vw - pw));
