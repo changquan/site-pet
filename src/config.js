@@ -1,5 +1,5 @@
-const VALID_PETS = ['cat', 'dog', 'dino'];
-const DEFAULTS = { pet: 'dino', scale: 2, speed: 3, floor: 0 };
+const VALID_PETS = ['dog'];
+const DEFAULTS = { pet: 'dog', scale: 2, speed: 3, floor: 0 };
 
 export function parseConfig(raw = {}) {
   const pet = VALID_PETS.includes(raw.pet) ? raw.pet : DEFAULTS.pet;

@@ -75,8 +75,8 @@
   });
 
   // src/config.js
-  var VALID_PETS = ["cat", "dog", "dino"];
-  var DEFAULTS = { pet: "dino", scale: 2, speed: 3, floor: 0 };
+  var VALID_PETS = ["dog"];
+  var DEFAULTS = { pet: "dog", scale: 2, speed: 3, floor: 0 };
   function parseConfig(raw = {}) {
     const pet = VALID_PETS.includes(raw.pet) ? raw.pet : DEFAULTS.pet;
     const scale = typeof raw.scale === "number" && raw.scale > 0 ? raw.scale : DEFAULTS.scale;

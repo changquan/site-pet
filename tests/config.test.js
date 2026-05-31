@@ -2,31 +2,23 @@ const { parseConfig } = require('../src/config.js');
 
 describe('parseConfig', () => {
   test('returns defaults when called with undefined', () => {
-    expect(parseConfig(undefined)).toEqual({ pet: 'dino', scale: 2, speed: 3, floor: 0 });
+    expect(parseConfig(undefined)).toEqual({ pet: 'dog', scale: 2, speed: 3, floor: 0 });
   });
 
   test('returns defaults when called with empty object', () => {
-    expect(parseConfig({})).toEqual({ pet: 'dino', scale: 2, speed: 3, floor: 0 });
-  });
-
-  test('accepts valid pet type cat', () => {
-    expect(parseConfig({ pet: 'cat' }).pet).toBe('cat');
+    expect(parseConfig({})).toEqual({ pet: 'dog', scale: 2, speed: 3, floor: 0 });
   });
 
   test('accepts valid pet type dog', () => {
     expect(parseConfig({ pet: 'dog' }).pet).toBe('dog');
   });
 
-  test('accepts valid pet type dino', () => {
-    expect(parseConfig({ pet: 'dino' }).pet).toBe('dino');
+  test('falls back to dog for unknown pet type', () => {
+    expect(parseConfig({ pet: 'hamster' }).pet).toBe('dog');
   });
 
-  test('falls back to dino for unknown pet type', () => {
-    expect(parseConfig({ pet: 'hamster' }).pet).toBe('dino');
-  });
-
-  test('falls back to dino for numeric pet', () => {
-    expect(parseConfig({ pet: 42 }).pet).toBe('dino');
+  test('falls back to dog for numeric pet', () => {
+    expect(parseConfig({ pet: 42 }).pet).toBe('dog');
   });
 
   test('accepts positive scale', () => {
