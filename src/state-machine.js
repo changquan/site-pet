@@ -80,7 +80,9 @@ export class StateMachine {
 
   onCursorFar() {
     if (this.state === STATES.FOLLOW_CURSOR) {
+      this.stop();
       this._transition(this._preInterruptState);
+      this._scheduleNext();
     }
   }
 
@@ -90,6 +92,8 @@ export class StateMachine {
   }
 
   onClickEnd() {
+    this.stop();
     this._transition(this._preInterruptState);
+    this._scheduleNext();
   }
 }

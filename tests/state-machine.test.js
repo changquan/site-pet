@@ -96,4 +96,27 @@ describe('StateMachine', () => {
     sm.onEdge('right');
     expect(cb).toHaveBeenCalledWith(STATES.WALK_LEFT);
   });
+
+  test('onCursorFar restarts autonomous timer after resuming', () => {
+    const cb = jest.fn();
+    sm.setOnTransition(cb);
+    sm._preInterruptState = STATES.WALK_RIGHT;
+    sm.onCursorNear(); // enter follow-cursor
+    cb.mockClear();
+    sm.onCursorFar(); // resume walk-right
+    // advance timers — should trigger autonomous transition (not double fire)
+    jest.runOnlyPendingTimers();
+    expect(cb).toHaveBeenCalledTimes(2); // resume + one autonomous transition
+  });
+
+  test('onClickEnd restarts autonomous timer after resuming', () => {
+    const cb = jest.fn();
+    sm.setOnTransition(cb);
+    sm._preInterruptState = STATES.IDLE;
+    sm.onClick(); // enter clicked
+    cb.mockClear();
+    sm.onClickEnd(); // resume idle
+    jest.runOnlyPendingTimers();
+    expect(cb).toHaveBeenCalledTimes(2); // resume + one autonomous transition
+  });
 });
