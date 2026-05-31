@@ -1,81 +1,6 @@
 (() => {
-  var __create = Object.create;
-  var __defProp = Object.defineProperty;
-  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-  var __getOwnPropNames = Object.getOwnPropertyNames;
-  var __getProtoOf = Object.getPrototypeOf;
-  var __hasOwnProp = Object.prototype.hasOwnProperty;
-  var __commonJS = (cb, mod) => function __require() {
-    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
-  };
-  var __copyProps = (to, from, except, desc) => {
-    if (from && typeof from === "object" || typeof from === "function") {
-      for (let key of __getOwnPropNames(from))
-        if (!__hasOwnProp.call(to, key) && key !== except)
-          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-    }
-    return to;
-  };
-  var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-    // If the importer is in node compatibility mode or this is not an ESM
-    // file that has been converted to a CommonJS file using a Babel-
-    // compatible transform (i.e. "__esModule" has not been set), then set
-    // "default" to the CommonJS "module.exports" for node compatibility.
-    isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-    mod
-  ));
-
-  // src/renderer.js
-  var require_renderer = __commonJS({
-    "src/renderer.js"(exports, module) {
-      function createRenderer2({ floor, scale }) {
-        const container = document.createElement("div");
-        container.id = "site-pet-container";
-        Object.assign(container.style, {
-          position: "fixed",
-          bottom: `${floor}px`,
-          left: "0px",
-          zIndex: "99999",
-          pointerEvents: "auto",
-          cursor: "pointer",
-          userSelect: "none",
-          lineHeight: "0"
-        });
-        const img = document.createElement("img");
-        img.alt = "";
-        Object.assign(img.style, {
-          imageRendering: "pixelated",
-          display: "block"
-        });
-        container.appendChild(img);
-        document.body.appendChild(container);
-        return {
-          setPosition(x) {
-            container.style.left = `${x}px`;
-          },
-          setSprite(url, flip, currentScale) {
-            img.src = url;
-            const sc = currentScale || scale;
-            img.style.transform = flip ? `scaleX(-1) scale(${sc})` : `scale(${sc})`;
-            img.style.transformOrigin = "bottom left";
-          },
-          getElement() {
-            return container;
-          },
-          getWidth() {
-            return (img.naturalWidth || 32) * scale;
-          },
-          remove() {
-            container.remove();
-          }
-        };
-      }
-      module.exports = { createRenderer: createRenderer2 };
-    }
-  });
-
   // src/config.js
-  var VALID_PETS = ["dog"];
+  var VALID_PETS = ["dog", "dino"];
   var DEFAULTS = { pet: "dog", scale: 2, speed: 3, floor: 0 };
   function parseConfig(raw = {}) {
     const pet = VALID_PETS.includes(raw.pet) ? raw.pet : DEFAULTS.pet;
@@ -86,7 +11,7 @@
   }
 
   // src/sprites.js
-  var STATE_TO_FILE = {
+  var GIF_STATES = {
     "walk-right": { file: "walk.gif", flip: false },
     "walk-left": { file: "walk.gif", flip: true },
     "idle": { file: "idle.gif", flip: false },
@@ -94,10 +19,40 @@
     "follow-cursor": { file: "walk.gif", flip: false },
     "clicked": { file: "click.gif", flip: false }
   };
-  var FALLBACK = { file: "idle.gif", flip: false };
-  function getSpriteUrl(pet, state, base) {
-    const { file, flip } = STATE_TO_FILE[state] || FALLBACK;
-    return { url: `${base}sprites/${pet}/${file}`, flip };
+  var GIF_FALLBACK = { file: "idle.gif", flip: false };
+  var FW = 192;
+  var FH = 192;
+  var DINO_SHEET = {
+    file: "sprites/dino2.png",
+    frameW: FW,
+    frameH: FH,
+    sheetW: 1536,
+    sheetH: 1024,
+    states: {
+      "walk-right": { frames: [[0, 0], [FW, 0], [FW * 2, 0], [FW * 3, 0], [FW * 4, 0], [FW * 5, 0]], flip: false },
+      "walk-left": { frames: [[0, 0], [FW, 0], [FW * 2, 0], [FW * 3, 0], [FW * 4, 0], [FW * 5, 0]], flip: true },
+      "idle": { frames: [[0, FH], [FW, FH], [FW * 2, FH], [FW * 3, FH]], flip: false },
+      "sitting": { frames: [[0, FH * 2], [FW, FH * 2], [FW * 2, FH * 2]], flip: false },
+      "follow-cursor": { frames: [[0, 0], [FW, 0], [FW * 2, 0], [FW * 3, 0], [FW * 4, 0], [FW * 5, 0]], flip: false },
+      "clicked": { frames: [[0, FH * 4], [FW, FH * 4], [FW * 2, FH * 4], [FW * 3, FH * 4]], flip: false }
+    }
+  };
+  function getSpriteInfo(pet, state, base) {
+    if (pet === "dino") {
+      const s = DINO_SHEET.states[state] || DINO_SHEET.states["idle"];
+      return {
+        type: "sheet",
+        url: `${base}${DINO_SHEET.file}`,
+        frames: s.frames,
+        frameW: DINO_SHEET.frameW,
+        frameH: DINO_SHEET.frameH,
+        sheetW: DINO_SHEET.sheetW,
+        sheetH: DINO_SHEET.sheetH,
+        flip: s.flip
+      };
+    }
+    const { file, flip } = GIF_STATES[state] || GIF_FALLBACK;
+    return { type: "gif", url: `${base}sprites/${pet}/${file}`, flip };
   }
   function getScriptBase() {
     const scripts = document.querySelectorAll("script[src]");
@@ -201,8 +156,77 @@
     }
   };
 
-  // src/index.js
-  var import_renderer = __toESM(require_renderer());
+  // src/renderer.js
+  function createRenderer({ floor, scale }) {
+    const container = document.createElement("div");
+    container.id = "site-pet-container";
+    Object.assign(container.style, {
+      position: "fixed",
+      bottom: `${floor}px`,
+      left: "0px",
+      zIndex: "99999",
+      pointerEvents: "auto",
+      cursor: "pointer",
+      userSelect: "none",
+      lineHeight: "0"
+    });
+    const img = document.createElement("img");
+    img.alt = "";
+    Object.assign(img.style, {
+      imageRendering: "pixelated",
+      display: "block"
+    });
+    const sheet = document.createElement("div");
+    Object.assign(sheet.style, {
+      imageRendering: "pixelated",
+      display: "none",
+      backgroundRepeat: "no-repeat"
+    });
+    container.appendChild(img);
+    container.appendChild(sheet);
+    document.body.appendChild(container);
+    let _mode = "gif";
+    return {
+      setPosition(x) {
+        container.style.left = `${x}px`;
+      },
+      setSprite(url, flip, currentScale) {
+        _mode = "gif";
+        img.style.display = "block";
+        sheet.style.display = "none";
+        img.src = url;
+        const sc = currentScale || scale;
+        img.style.transform = flip ? `scaleX(-1) scale(${sc})` : `scale(${sc})`;
+        img.style.transformOrigin = "bottom left";
+      },
+      setSheetFrame(url, frameX, frameY, frameW, frameH, sheetW, sheetH, flip, currentScale) {
+        _mode = "sheet";
+        img.style.display = "none";
+        sheet.style.display = "block";
+        const sc = currentScale || scale;
+        const w = Math.round(frameW * sc);
+        const h = Math.round(frameH * sc);
+        sheet.style.width = `${w}px`;
+        sheet.style.height = `${h}px`;
+        sheet.style.backgroundImage = `url(${url})`;
+        sheet.style.backgroundSize = `${Math.round(sheetW * sc)}px ${Math.round(sheetH * sc)}px`;
+        sheet.style.backgroundPosition = `-${Math.round(frameX * sc)}px -${Math.round(frameY * sc)}px`;
+        sheet.style.transform = flip ? "scaleX(-1)" : "none";
+        sheet.style.transformOrigin = "bottom left";
+      },
+      getElement() {
+        return container;
+      },
+      getWidth() {
+        if (_mode === "sheet")
+          return parseFloat(sheet.style.width) || 64;
+        return (img.naturalWidth || 32) * scale;
+      },
+      remove() {
+        container.remove();
+      }
+    };
+  }
 
   // src/cursor.js
   function isNear(el, cursorX, cursorY, threshold = 100) {
@@ -254,19 +278,51 @@
     const config = parseConfig(window.SitePetConfig);
     const base = getScriptBase();
     const sm = new StateMachine();
-    const renderer = (0, import_renderer.createRenderer)(config);
+    const renderer = createRenderer(config);
     let x = Math.random() * Math.max(0, window.innerWidth - 64);
     let running = true;
+    let frameTimer = null;
+    let frameIdx = 0;
+    let currentAnimState = null;
+    let currentFlip = false;
+    function stopSheetAnim() {
+      if (frameTimer) {
+        clearInterval(frameTimer);
+        frameTimer = null;
+      }
+    }
+    function startSheetAnim(info, state, flip) {
+      currentFlip = flip;
+      if (currentAnimState === state)
+        return;
+      currentAnimState = state;
+      frameIdx = 0;
+      stopSheetAnim();
+      function showFrame() {
+        const [fx, fy] = info.frames[frameIdx % info.frames.length];
+        renderer.setSheetFrame(info.url, fx, fy, info.frameW, info.frameH, info.sheetW, info.sheetH, currentFlip, config.scale);
+        frameIdx++;
+      }
+      showFrame();
+      frameTimer = setInterval(showFrame, 150);
+    }
     function applySprite(state) {
-      const { url, flip: baseFlip } = getSpriteUrl(config.pet, state, base);
-      let flip = baseFlip;
+      const info = getSpriteInfo(config.pet, state, base);
+      let flip = info.flip;
       if (state === STATES.FOLLOW_CURSOR) {
         flip = cursorDirection(renderer.getElement(), cursor.getCursorX()) === "left";
       }
-      renderer.setSprite(url, flip, config.scale);
+      if (info.type === "sheet") {
+        startSheetAnim(info, state, flip);
+      } else {
+        stopSheetAnim();
+        currentAnimState = null;
+        renderer.setSprite(info.url, flip, config.scale);
+      }
     }
     renderer.getElement().querySelector("img").addEventListener("error", () => {
       running = false;
+      stopSheetAnim();
       renderer.remove();
       sm.stop();
     });
@@ -307,7 +363,7 @@
         const diff = target - x;
         x += Math.sign(diff) * Math.min(Math.abs(diff), config.speed * 2 * dt / 16);
         x = Math.max(0, Math.min(x, vw - pw));
-        applySprite(state);
+        currentFlip = cursorDirection(renderer.getElement(), cursor.getCursorX()) === "left";
       }
       renderer.setPosition(Math.round(x));
       requestAnimationFrame(loop);

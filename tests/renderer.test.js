@@ -55,4 +55,28 @@ describe('createRenderer', () => {
     expect(document.body.contains(el)).toBe(false);
     renderer = null;
   });
+
+  test('setSheetFrame switches to sheet div and sets background-position', () => {
+    renderer = createRenderer({ floor: 0, scale: 2 });
+    renderer.setSheetFrame('sprites/dino2.png', 192, 0, 192, 192, 1536, 1024, false, 2);
+    const sheetDiv = renderer.getElement().querySelectorAll('div')[0];
+    expect(sheetDiv.style.display).toBe('block');
+    expect(sheetDiv.style.backgroundImage).toContain('dino2.png');
+    expect(sheetDiv.style.backgroundPosition).toMatch(/-384px -?0px/);
+  });
+
+  test('setSheetFrame applies scaleX(-1) when flip is true', () => {
+    renderer = createRenderer({ floor: 0, scale: 2 });
+    renderer.setSheetFrame('sprites/dino2.png', 0, 0, 192, 192, 1536, 1024, true, 2);
+    const sheetDiv = renderer.getElement().querySelectorAll('div')[0];
+    expect(sheetDiv.style.transform).toContain('scaleX(-1)');
+  });
+
+  test('setSheetFrame hides img element', () => {
+    renderer = createRenderer({ floor: 0, scale: 2 });
+    renderer.setSprite('dog/walk.gif', false, 2);
+    renderer.setSheetFrame('sprites/dino2.png', 0, 0, 192, 192, 1536, 1024, false, 2);
+    const img = renderer.getElement().querySelector('img');
+    expect(img.style.display).toBe('none');
+  });
 });

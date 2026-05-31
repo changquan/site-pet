@@ -13,6 +13,10 @@ describe('parseConfig', () => {
     expect(parseConfig({ pet: 'dog' }).pet).toBe('dog');
   });
 
+  test('accepts valid pet type dino', () => {
+    expect(parseConfig({ pet: 'dino' }).pet).toBe('dino');
+  });
+
   test('falls back to dog for unknown pet type', () => {
     expect(parseConfig({ pet: 'hamster' }).pet).toBe('dog');
   });
