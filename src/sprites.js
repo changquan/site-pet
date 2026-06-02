@@ -30,7 +30,7 @@ export function getSpriteInfo(pet, state, base) {
   }
   if (pet === 'dino') {
     const { file, flip } = DINO_GIF_STATES[state] || DINO_GIF_FALLBACK;
-    return { type: 'gif', url: `${base}sprites/${file}`, flip };
+    return { type: 'gif', url: `${base}sprites/dino/${file}`, flip };
   }
   const { file, flip } = GIF_STATES[state] || GIF_FALLBACK;
   return { type: 'gif', url: `${base}sprites/${pet}/${file}`, flip };

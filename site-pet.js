@@ -1,6 +1,6 @@
 (() => {
   // src/config.js
-  var VALID_PETS = ["dog", "dino"];
+  var VALID_PETS = ["dog", "dino", "drago"];
   var DEFAULTS = { pet: "dog", scale: 2, speed: 3, floor: 0 };
   function parseConfig(raw = {}) {
     const pet = VALID_PETS.includes(raw.pet) ? raw.pet : DEFAULTS.pet;
@@ -20,36 +20,27 @@
     "clicked": { file: "click.gif", flip: false }
   };
   var GIF_FALLBACK = { file: "idle.gif", flip: false };
-  var FW = 192;
-  var FH = 192;
-  var DINO_SHEET = {
-    file: "sprites/dino2.png",
-    frameW: FW,
-    frameH: FH,
-    sheetW: 1536,
-    sheetH: 1024,
-    states: {
-      "walk-right": { frames: [[0, 0], [FW, 0], [FW * 2, 0], [FW * 3, 0], [FW * 4, 0], [FW * 5, 0]], flip: false },
-      "walk-left": { frames: [[0, 0], [FW, 0], [FW * 2, 0], [FW * 3, 0], [FW * 4, 0], [FW * 5, 0]], flip: true },
-      "idle": { frames: [[0, FH], [FW, FH], [FW * 2, FH], [FW * 3, FH]], flip: false },
-      "sitting": { frames: [[0, FH * 2], [FW, FH * 2], [FW * 2, FH * 2]], flip: false },
-      "follow-cursor": { frames: [[0, 0], [FW, 0], [FW * 2, 0], [FW * 3, 0], [FW * 4, 0], [FW * 5, 0]], flip: false },
-      "clicked": { frames: [[0, FH * 4], [FW, FH * 4], [FW * 2, FH * 4], [FW * 3, FH * 4]], flip: false }
-    }
+  var DRAGO_GIF_STATES = {
+    "walk-right": { file: "drago-walk-v1.gif", flip: false },
+    "walk-left": { file: "drago-walk-v1.gif", flip: true },
+    "sleeping": { file: "drago-sleep-v3.gif", flip: false },
+    "clicked": { file: "drago-sneeze-spark.gif", flip: false }
   };
+  var DRAGO_GIF_FALLBACK = { file: "drago-sleep-v3.gif", flip: false };
+  var DINO_GIF_STATES = {
+    "walk-right": { file: "dino-walk-v1.gif", flip: false },
+    "walk-left": { file: "dino-walk-v1.gif", flip: true },
+    "sleeping": { file: "dino-sleep-v1.gif", flip: false }
+  };
+  var DINO_GIF_FALLBACK = { file: "dino-sleep-v1.gif", flip: false };
   function getSpriteInfo(pet, state, base) {
+    if (pet === "drago") {
+      const { file: file2, flip: flip2 } = DRAGO_GIF_STATES[state] || DRAGO_GIF_FALLBACK;
+      return { type: "gif", url: `${base}sprites/drago/${file2}`, flip: flip2 };
+    }
     if (pet === "dino") {
-      const s = DINO_SHEET.states[state] || DINO_SHEET.states["idle"];
-      return {
-        type: "sheet",
-        url: `${base}${DINO_SHEET.file}`,
-        frames: s.frames,
-        frameW: DINO_SHEET.frameW,
-        frameH: DINO_SHEET.frameH,
-        sheetW: DINO_SHEET.sheetW,
-        sheetH: DINO_SHEET.sheetH,
-        flip: s.flip
-      };
+      const { file: file2, flip: flip2 } = DINO_GIF_STATES[state] || DINO_GIF_FALLBACK;
+      return { type: "gif", url: `${base}sprites/dino/${file2}`, flip: flip2 };
     }
     const { file, flip } = GIF_STATES[state] || GIF_FALLBACK;
     return { type: "gif", url: `${base}sprites/${pet}/${file}`, flip };
@@ -72,13 +63,28 @@
     IDLE: "idle",
     SITTING: "sitting",
     FOLLOW_CURSOR: "follow-cursor",
-    CLICKED: "clicked"
+    CLICKED: "clicked",
+    SLEEPING: "sleeping"
+  };
+  var DEFAULT_DELAYS = {
+    [STATES.WALK_RIGHT]: [3e3, 8e3],
+    [STATES.WALK_LEFT]: [3e3, 8e3],
+    [STATES.IDLE]: [2e3, 4e3],
+    [STATES.SITTING]: [2e3, 5e3]
+  };
+  var DEFAULT_TRANSITIONS = {
+    [STATES.WALK_RIGHT]: STATES.IDLE,
+    [STATES.WALK_LEFT]: STATES.IDLE,
+    [STATES.IDLE]: STATES.SITTING,
+    [STATES.SITTING]: () => Math.random() > 0.5 ? STATES.WALK_RIGHT : STATES.WALK_LEFT
   };
   function randomBetween(min, max) {
     return Math.floor(Math.random() * (max - min)) + min;
   }
   var StateMachine = class {
-    constructor() {
+    constructor({ delays, transitions } = {}) {
+      this._delayRanges = delays || DEFAULT_DELAYS;
+      this._transitions = transitions || DEFAULT_TRANSITIONS;
       this.state = STATES.WALK_RIGHT;
       this._preInterruptState = STATES.WALK_RIGHT;
       this._timer = null;
@@ -101,22 +107,13 @@
       this._timer = null;
     }
     _scheduleNext() {
-      const delays = {
-        [STATES.WALK_RIGHT]: randomBetween(3e3, 8e3),
-        [STATES.WALK_LEFT]: randomBetween(3e3, 8e3),
-        [STATES.IDLE]: randomBetween(2e3, 4e3),
-        [STATES.SITTING]: randomBetween(2e3, 5e3)
-      };
-      const delay = delays[this.state] ?? 3e3;
+      const range = this._delayRanges[this.state] || [3e3, 6e3];
+      const delay = randomBetween(range[0], range[1]);
       this._timer = setTimeout(() => this._autonomousTransition(), delay);
     }
     _autonomousTransition() {
-      const next = {
-        [STATES.WALK_RIGHT]: STATES.IDLE,
-        [STATES.WALK_LEFT]: STATES.IDLE,
-        [STATES.IDLE]: STATES.SITTING,
-        [STATES.SITTING]: Math.random() > 0.5 ? STATES.WALK_RIGHT : STATES.WALK_LEFT
-      }[this.state] || STATES.WALK_RIGHT;
+      const t = this._transitions[this.state];
+      const next = (typeof t === "function" ? t() : t) || STATES.WALK_RIGHT;
       this._preInterruptState = next;
       this._transition(next);
       this._scheduleNext();
@@ -277,7 +274,19 @@
   function init() {
     const config = parseConfig(window.SitePetConfig);
     const base = getScriptBase();
-    const sm = new StateMachine();
+    const smConfig = config.pet === "dino" || config.pet === "drago" ? {
+      delays: {
+        [STATES.WALK_RIGHT]: [3e3, 8e3],
+        [STATES.WALK_LEFT]: [3e3, 8e3],
+        [STATES.SLEEPING]: [4e3, 8e3]
+      },
+      transitions: {
+        [STATES.WALK_RIGHT]: STATES.SLEEPING,
+        [STATES.WALK_LEFT]: STATES.SLEEPING,
+        [STATES.SLEEPING]: () => Math.random() > 0.5 ? STATES.WALK_RIGHT : STATES.WALK_LEFT
+      }
+    } : {};
+    const sm = new StateMachine(smConfig);
     const renderer = createRenderer(config);
     let x = Math.random() * Math.max(0, window.innerWidth - 64);
     let running = true;
@@ -329,13 +338,16 @@
     sm.setOnTransition((state) => applySprite(state));
     applySprite(STATES.WALK_RIGHT);
     renderer.setPosition(x);
-    const cursor = setupCursorTracking({
+    const clickDuration = config.pet === "drago" ? 3e3 : 800;
+    const cursor = config.pet === "dino" ? { getCursorX: () => 0 } : setupCursorTracking({
       getEl: () => renderer.getElement(),
-      onNear: () => sm.onCursorNear(),
-      onFar: () => sm.onCursorFar(),
+      onNear: config.pet === "drago" ? () => {
+      } : () => sm.onCursorNear(),
+      onFar: config.pet === "drago" ? () => {
+      } : () => sm.onCursorFar(),
       onPetClick: () => {
         sm.onClick();
-        setTimeout(() => sm.onClickEnd(), 800);
+        setTimeout(() => sm.onClickEnd(), clickDuration);
       }
     });
     let lastTime = null;
