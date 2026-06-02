@@ -8,7 +8,19 @@ function init() {
   const config = parseConfig(window.SitePetConfig);
   const base = getScriptBase();
 
-  const sm = new StateMachine();
+  const smConfig = (config.pet === 'dino' || config.pet === 'drago') ? {
+    delays: {
+      [STATES.WALK_RIGHT]: [3000, 8000],
+      [STATES.WALK_LEFT]:  [3000, 8000],
+      [STATES.SLEEPING]:   [4000, 8000],
+    },
+    transitions: {
+      [STATES.WALK_RIGHT]: STATES.SLEEPING,
+      [STATES.WALK_LEFT]:  STATES.SLEEPING,
+      [STATES.SLEEPING]:   () => Math.random() > 0.5 ? STATES.WALK_RIGHT : STATES.WALK_LEFT,
+    },
+  } : {};
+  const sm = new StateMachine(smConfig);
   const renderer = createRenderer(config);
 
   let x = Math.random() * Math.max(0, window.innerWidth - 64);
@@ -66,13 +78,14 @@ function init() {
   applySprite(STATES.WALK_RIGHT);
   renderer.setPosition(x);
 
-  const cursor = setupCursorTracking({
+  const clickDuration = config.pet === 'drago' ? 3000 : 800;
+  const cursor = config.pet === 'dino' ? { getCursorX: () => 0 } : setupCursorTracking({
     getEl: () => renderer.getElement(),
-    onNear: () => sm.onCursorNear(),
-    onFar:  () => sm.onCursorFar(),
+    onNear: config.pet === 'drago' ? () => {} : () => sm.onCursorNear(),
+    onFar:  config.pet === 'drago' ? () => {} : () => sm.onCursorFar(),
     onPetClick: () => {
       sm.onClick();
-      setTimeout(() => sm.onClickEnd(), 800);
+      setTimeout(() => sm.onClickEnd(), clickDuration);
     },
   });
 

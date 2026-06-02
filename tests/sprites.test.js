@@ -49,55 +49,35 @@ describe('getSpriteUrl', () => {
   });
 });
 
-describe('getSpriteInfo — dino sheet', () => {
-  test('returns type sheet for dino', () => {
-    expect(getSpriteInfo('dino', 'walk-right', base).type).toBe('sheet');
+describe('getSpriteInfo — dino gifs', () => {
+  test('returns type gif for dino', () => {
+    expect(getSpriteInfo('dino', 'walk-right', base).type).toBe('gif');
   });
 
   test('returns type gif for dog', () => {
     expect(getSpriteInfo('dog', 'walk-right', base).type).toBe('gif');
   });
 
-  test('dino walk-right has 6 frames unflipped', () => {
+  test('dino walk-right uses walk gif unflipped', () => {
     const info = getSpriteInfo('dino', 'walk-right', base);
-    expect(info.frames).toHaveLength(6);
+    expect(info.url).toContain('dino-walk-v1.gif');
     expect(info.flip).toBe(false);
   });
 
-  test('dino walk-left has 6 frames flipped', () => {
+  test('dino walk-left uses walk gif flipped', () => {
     const info = getSpriteInfo('dino', 'walk-left', base);
-    expect(info.frames).toHaveLength(6);
+    expect(info.url).toContain('dino-walk-v1.gif');
     expect(info.flip).toBe(true);
   });
 
-  test('dino idle has 4 frames', () => {
-    expect(getSpriteInfo('dino', 'idle', base).frames).toHaveLength(4);
+  test('dino sleeping uses sleep gif unflipped', () => {
+    const info = getSpriteInfo('dino', 'sleeping', base);
+    expect(info.url).toContain('dino-sleep-v1.gif');
+    expect(info.flip).toBe(false);
   });
 
-  test('dino sitting has 3 frames', () => {
-    expect(getSpriteInfo('dino', 'sitting', base).frames).toHaveLength(3);
-  });
-
-  test('dino clicked has 4 frames from REACT row (y=768)', () => {
-    const info = getSpriteInfo('dino', 'clicked', base);
-    expect(info.frames).toHaveLength(4);
-    expect(info.frames[0][1]).toBe(768); // y = row 4 * 192
-  });
-
-  test('dino sheet dimensions are correct', () => {
-    const info = getSpriteInfo('dino', 'idle', base);
-    expect(info.frameW).toBe(192);
-    expect(info.frameH).toBe(192);
-    expect(info.sheetW).toBe(1536);
-    expect(info.sheetH).toBe(1024);
-  });
-
-  test('dino url points to dino2.png', () => {
-    expect(getSpriteInfo('dino', 'idle', base).url).toContain('dino2.png');
-  });
-
-  test('unknown state falls back to idle frames', () => {
+  test('unknown state falls back to sleep gif', () => {
     const info = getSpriteInfo('dino', 'unknown', base);
-    expect(info.frames).toHaveLength(4); // idle fallback
+    expect(info.url).toContain('dino-sleep-v1.gif');
   });
 });

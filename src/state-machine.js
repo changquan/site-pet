@@ -5,6 +5,21 @@ export const STATES = {
   SITTING:       'sitting',
   FOLLOW_CURSOR: 'follow-cursor',
   CLICKED:       'clicked',
+  SLEEPING:      'sleeping',
+};
+
+const DEFAULT_DELAYS = {
+  [STATES.WALK_RIGHT]: [3000, 8000],
+  [STATES.WALK_LEFT]:  [3000, 8000],
+  [STATES.IDLE]:       [2000, 4000],
+  [STATES.SITTING]:    [2000, 5000],
+};
+
+const DEFAULT_TRANSITIONS = {
+  [STATES.WALK_RIGHT]: STATES.IDLE,
+  [STATES.WALK_LEFT]:  STATES.IDLE,
+  [STATES.IDLE]:       STATES.SITTING,
+  [STATES.SITTING]:    () => Math.random() > 0.5 ? STATES.WALK_RIGHT : STATES.WALK_LEFT,
 };
 
 function randomBetween(min, max) {
@@ -12,7 +27,9 @@ function randomBetween(min, max) {
 }
 
 export class StateMachine {
-  constructor() {
+  constructor({ delays, transitions } = {}) {
+    this._delayRanges = delays || DEFAULT_DELAYS;
+    this._transitions = transitions || DEFAULT_TRANSITIONS;
     this.state = STATES.WALK_RIGHT;
     this._preInterruptState = STATES.WALK_RIGHT;
     this._timer = null;
@@ -38,23 +55,14 @@ export class StateMachine {
   }
 
   _scheduleNext() {
-    const delays = {
-      [STATES.WALK_RIGHT]: randomBetween(3000, 8000),
-      [STATES.WALK_LEFT]:  randomBetween(3000, 8000),
-      [STATES.IDLE]:       randomBetween(2000, 4000),
-      [STATES.SITTING]:    randomBetween(2000, 5000),
-    };
-    const delay = delays[this.state] ?? 3000;
+    const range = this._delayRanges[this.state] || [3000, 6000];
+    const delay = randomBetween(range[0], range[1]);
     this._timer = setTimeout(() => this._autonomousTransition(), delay);
   }
 
   _autonomousTransition() {
-    const next = {
-      [STATES.WALK_RIGHT]: STATES.IDLE,
-      [STATES.WALK_LEFT]:  STATES.IDLE,
-      [STATES.IDLE]:       STATES.SITTING,
-      [STATES.SITTING]:    Math.random() > 0.5 ? STATES.WALK_RIGHT : STATES.WALK_LEFT,
-    }[this.state] || STATES.WALK_RIGHT;
+    const t = this._transitions[this.state];
+    const next = (typeof t === 'function' ? t() : t) || STATES.WALK_RIGHT;
 
     this._preInterruptState = next;
     this._transition(next);

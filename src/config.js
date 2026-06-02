@@ -1,4 +1,4 @@
-const VALID_PETS = ['dog', 'dino'];
+const VALID_PETS = ['dog', 'dino', 'drago'];
 const DEFAULTS = { pet: 'dog', scale: 2, speed: 3, floor: 0 };
 
 export function parseConfig(raw = {}) {
