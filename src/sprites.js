@@ -3,8 +3,7 @@ const GIF_STATES = {
   'walk-left':     { file: 'walk.gif',  flip: true  },
   'idle':          { file: 'idle.gif',  flip: false },
   'sitting':       { file: 'sit.gif',   flip: false },
-  'follow-cursor': { file: 'walk.gif',  flip: false },
-  'clicked':       { file: 'click.gif', flip: false },
+'clicked':       { file: 'click.gif', flip: false },
 };
 const GIF_FALLBACK = { file: 'idle.gif', flip: false };
 

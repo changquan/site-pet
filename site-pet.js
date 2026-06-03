@@ -16,7 +16,6 @@
     "walk-left": { file: "walk.gif", flip: true },
     "idle": { file: "idle.gif", flip: false },
     "sitting": { file: "sit.gif", flip: false },
-    "follow-cursor": { file: "walk.gif", flip: false },
     "clicked": { file: "click.gif", flip: false }
   };
   var GIF_FALLBACK = { file: "idle.gif", flip: false };
@@ -62,7 +61,6 @@
     WALK_LEFT: "walk-left",
     IDLE: "idle",
     SITTING: "sitting",
-    FOLLOW_CURSOR: "follow-cursor",
     CLICKED: "clicked",
     SLEEPING: "sleeping"
   };
@@ -125,20 +123,6 @@
       } else if (edge === "left" && this.state === STATES.WALK_LEFT) {
         this._preInterruptState = STATES.WALK_RIGHT;
         this._transition(STATES.WALK_RIGHT);
-      }
-    }
-    onCursorNear() {
-      if (this.state === STATES.CLICKED)
-        return;
-      if (this.state !== STATES.FOLLOW_CURSOR) {
-        this._transition(STATES.FOLLOW_CURSOR);
-      }
-    }
-    onCursorFar() {
-      if (this.state === STATES.FOLLOW_CURSOR) {
-        this.stop();
-        this._transition(this._preInterruptState);
-        this._scheduleNext();
       }
     }
     onClick() {
@@ -234,37 +218,14 @@
     const dy = cursorY - cy;
     return dx * dx + dy * dy < threshold * threshold;
   }
-  function cursorDirection(el, cursorX) {
-    const rect = el.getBoundingClientRect();
-    return cursorX >= rect.left + rect.width / 2 ? "right" : "left";
-  }
-  function setupCursorTracking({ getEl, onNear, onFar, onPetClick }) {
-    let cursorX = -9999;
-    let cursorY = -9999;
-    let near = false;
-    function handleMove(e) {
-      cursorX = e.clientX;
-      cursorY = e.clientY;
-      const nowNear = isNear(getEl(), cursorX, cursorY);
-      if (nowNear && !near) {
-        near = true;
-        onNear();
-      }
-      if (!nowNear && near) {
-        near = false;
-        onFar();
-      }
-    }
+  function setupCursorTracking({ getEl, onPetClick }) {
     function handleClick(e) {
       if (isNear(getEl(), e.clientX, e.clientY, 80))
         onPetClick();
     }
-    document.addEventListener("mousemove", handleMove);
     document.addEventListener("click", handleClick);
     return {
-      getCursorX: () => cursorX,
       teardown() {
-        document.removeEventListener("mousemove", handleMove);
         document.removeEventListener("click", handleClick);
       }
     };
@@ -317,10 +278,7 @@
     }
     function applySprite(state) {
       const info = getSpriteInfo(config.pet, state, base);
-      let flip = info.flip;
-      if (state === STATES.FOLLOW_CURSOR) {
-        flip = cursorDirection(renderer.getElement(), cursor.getCursorX()) === "left";
-      }
+      const flip = info.flip;
       if (info.type === "sheet") {
         startSheetAnim(info, state, flip);
       } else {
@@ -339,17 +297,15 @@
     applySprite(STATES.WALK_RIGHT);
     renderer.setPosition(x);
     const clickDuration = config.pet === "drago" ? 3e3 : 800;
-    const cursor = config.pet === "dino" ? { getCursorX: () => 0 } : setupCursorTracking({
-      getEl: () => renderer.getElement(),
-      onNear: config.pet === "drago" ? () => {
-      } : () => sm.onCursorNear(),
-      onFar: config.pet === "drago" ? () => {
-      } : () => sm.onCursorFar(),
-      onPetClick: () => {
-        sm.onClick();
-        setTimeout(() => sm.onClickEnd(), clickDuration);
-      }
-    });
+    if (config.pet !== "dino") {
+      setupCursorTracking({
+        getEl: () => renderer.getElement(),
+        onPetClick: () => {
+          sm.onClick();
+          setTimeout(() => sm.onClickEnd(), clickDuration);
+        }
+      });
+    }
     let lastTime = null;
     function loop(timestamp) {
       if (!running)
@@ -370,12 +326,6 @@
         x = Math.max(x - pxPerFrame, 0);
         if (x <= 0)
           sm.onEdge("left");
-      } else if (state === STATES.FOLLOW_CURSOR) {
-        const target = cursor.getCursorX() - pw / 2;
-        const diff = target - x;
-        x += Math.sign(diff) * Math.min(Math.abs(diff), config.speed * 2 * dt / 16);
-        x = Math.max(0, Math.min(x, vw - pw));
-        currentFlip = cursorDirection(renderer.getElement(), cursor.getCursorX()) === "left";
       }
       renderer.setPosition(Math.round(x));
       requestAnimationFrame(loop);

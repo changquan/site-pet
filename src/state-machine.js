@@ -1,11 +1,10 @@
 export const STATES = {
-  WALK_RIGHT:    'walk-right',
-  WALK_LEFT:     'walk-left',
-  IDLE:          'idle',
-  SITTING:       'sitting',
-  FOLLOW_CURSOR: 'follow-cursor',
-  CLICKED:       'clicked',
-  SLEEPING:      'sleeping',
+  WALK_RIGHT: 'walk-right',
+  WALK_LEFT:  'walk-left',
+  IDLE:       'idle',
+  SITTING:    'sitting',
+  CLICKED:    'clicked',
+  SLEEPING:   'sleeping',
 };
 
 const DEFAULT_DELAYS = {
@@ -76,21 +75,6 @@ export class StateMachine {
     } else if (edge === 'left' && this.state === STATES.WALK_LEFT) {
       this._preInterruptState = STATES.WALK_RIGHT;
       this._transition(STATES.WALK_RIGHT);
-    }
-  }
-
-  onCursorNear() {
-    if (this.state === STATES.CLICKED) return;
-    if (this.state !== STATES.FOLLOW_CURSOR) {
-      this._transition(STATES.FOLLOW_CURSOR);
-    }
-  }
-
-  onCursorFar() {
-    if (this.state === STATES.FOLLOW_CURSOR) {
-      this.stop();
-      this._transition(this._preInterruptState);
-      this._scheduleNext();
     }
   }
 

@@ -2,7 +2,7 @@ import { parseConfig } from './config.js';
 import { getSpriteInfo, getScriptBase } from './sprites.js';
 import { StateMachine, STATES } from './state-machine.js';
 import { createRenderer } from './renderer.js';
-import { setupCursorTracking, cursorDirection } from './cursor.js';
+import { setupCursorTracking } from './cursor.js';
 
 function init() {
   const config = parseConfig(window.SitePetConfig);
@@ -53,10 +53,7 @@ function init() {
 
   function applySprite(state) {
     const info = getSpriteInfo(config.pet, state, base);
-    let flip = info.flip;
-    if (state === STATES.FOLLOW_CURSOR) {
-      flip = cursorDirection(renderer.getElement(), cursor.getCursorX()) === 'left';
-    }
+    const flip = info.flip;
     if (info.type === 'sheet') {
       startSheetAnim(info, state, flip);
     } else {
@@ -79,15 +76,15 @@ function init() {
   renderer.setPosition(x);
 
   const clickDuration = config.pet === 'drago' ? 3000 : 800;
-  const cursor = config.pet === 'dino' ? { getCursorX: () => 0 } : setupCursorTracking({
-    getEl: () => renderer.getElement(),
-    onNear: config.pet === 'drago' ? () => {} : () => sm.onCursorNear(),
-    onFar:  config.pet === 'drago' ? () => {} : () => sm.onCursorFar(),
-    onPetClick: () => {
-      sm.onClick();
-      setTimeout(() => sm.onClickEnd(), clickDuration);
-    },
-  });
+  if (config.pet !== 'dino') {
+    setupCursorTracking({
+      getEl: () => renderer.getElement(),
+      onPetClick: () => {
+        sm.onClick();
+        setTimeout(() => sm.onClickEnd(), clickDuration);
+      },
+    });
+  }
 
   let lastTime = null;
   function loop(timestamp) {
@@ -107,13 +104,6 @@ function init() {
     } else if (state === STATES.WALK_LEFT) {
       x = Math.max(x - pxPerFrame, 0);
       if (x <= 0) sm.onEdge('left');
-    } else if (state === STATES.FOLLOW_CURSOR) {
-      const target = cursor.getCursorX() - pw / 2;
-      const diff = target - x;
-      x += Math.sign(diff) * Math.min(Math.abs(diff), config.speed * 2 * dt / 16);
-      x = Math.max(0, Math.min(x, vw - pw));
-      // Update flip direction each frame without restarting animation
-      currentFlip = cursorDirection(renderer.getElement(), cursor.getCursorX()) === 'left';
     }
 
     renderer.setPosition(Math.round(x));
